@@ -15,7 +15,7 @@ exports.io = (server) => {
 
         // disconnect
         socket.on('disconnect', async () => {
-            const userObj = await updateUserById(socket.handshake?.headers?.user_id, { status: false });
+            const userObj = await updateUser({ _id: socket.handshake?.headers?.user_id }, { $set: { online: false } })
             socket.emit('user-disconnected', userObj);
         });
     });

@@ -3,6 +3,7 @@
 const { Router } = require('express');
 const {
     sendMessage,
+    getMessages,
 } = require('../controller/messageController');
 const { upload } = require('../utils');
 const authMiddleware = require('../middlewares/Auth');
@@ -17,6 +18,7 @@ class MessageAPI {
     setupRoutes() {
         let router = this.router;
 
+        router.get('/:receiver', authMiddleware(Object.values(ROLES)), getMessages);
         router.post('/send', authMiddleware(Object.values(ROLES)), sendMessage);
         // upload('messages').single('image'), 
     }

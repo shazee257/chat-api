@@ -21,17 +21,18 @@ app.use(cookieSession({
     keys: [process.env.COOKIE_KEY],
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 }));
+app.use("/uploads", express.static("uploads"));
 
-app.use(cors({ origin: "*", credentials: false }));
+app.use(cors({ origin: "*", credentials: true }));
 
-app.get('/', (req, res) => res.json({ message: 'Welcome to the Divvi API' }));
+app.get('/', (req, res) => res.json({ message: 'Welcome to the Chat-App API' }));
 
 app.use(log);
 new API(app).registerGroups();
 app.use(notFound);
 app.use(errorHandler);
 
-app.use("/", express.static("uploads"));
+// app.use("/", express.static("uploads"));
 connectDB();
 
 server.listen(PORT, () => console.log(`Server port ${PORT}`));

@@ -79,14 +79,20 @@ exports.getUser = async (req, res, next) => {
 // get users
 exports.getUsers = async (req, res, next) => {
     const { searchTerm } = req.query;
+    const userId = req.user.id;
 
-    // check in fullName and email 
     const query = searchTerm ? {
-        $or: [
-            { fullName: { $regex: searchTerm, $options: 'i' } },
-            { email: { $regex: searchTerm, $options: 'i' } }
+        $and: [
+            { _id: { $ne: userId } },
+            {
+                $or
+                    : [
+                        { fullName: { $regex: searchTerm, $options: 'i' } },
+                        { email: { $regex: searchTerm, $options: 'i' } }
+                    ]
+            }
         ]
-    } : {};
+    } : { _id: { $ne: userId } };
 
     try {
         const users = await fetchUsers(query);
