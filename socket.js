@@ -6,7 +6,7 @@ let io;
 exports.io = (server) => {
     io = socketIO(server);
     io.on('connection', async (socket) => {
-        const userObj = await updateUser({ _id: socket.handshake?.headers?.user_id }, { $set: { online: true } })
+        const userObj = await updateUser({ _id: socket?.handshake?.auth?.user_id }, { $set: { online: true } })
 
         // broadcast to all users except the one who is connected
         socket.broadcast.emit('user-connected', userObj);
@@ -15,8 +15,8 @@ exports.io = (server) => {
 
         // disconnect
         socket.on('disconnect', async () => {
-            const userObj = await updateUser({ _id: socket.handshake?.headers?.user_id }, { $set: { online: false } })
-            socket.emit('user-disconnected', userObj);
+            const userObj = await updateUser({ _id: socket?.handshake?.auth?.user_id }, { $set: { online: false } })
+            socket.broadcast.emit('user-disconnected', userObj);
         });
     });
 };

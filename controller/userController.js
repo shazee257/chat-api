@@ -12,6 +12,7 @@ const {
 } = require('../models/userModel');
 const { compare, hash } = require('bcrypt');
 const { STATUS_CODES } = require('../utils/constants');
+const { Types } = require('mongoose');
 
 // register new user
 exports.register = async (req, res, next) => {
@@ -83,16 +84,16 @@ exports.getUsers = async (req, res, next) => {
 
     const query = searchTerm ? {
         $and: [
-            { _id: { $ne: userId } },
+            { _id: { $ne: Types.ObjectId(userId) } },
             {
                 $or
                     : [
-                        { fullName: { $regex: searchTerm, $options: 'i' } },
+                        { name: { $regex: searchTerm, $options: 'i' } },
                         { email: { $regex: searchTerm, $options: 'i' } }
                     ]
             }
         ]
-    } : { _id: { $ne: userId } };
+    } : { _id: { $ne: Types.ObjectId(userId) } };
 
     try {
         const users = await fetchUsers(query);

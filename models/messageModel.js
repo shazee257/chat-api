@@ -15,7 +15,7 @@ const MessageModel = model("Message", MessageSchema);
 exports.createMessage = (obj) => MessageModel.create(obj);
 
 // find messages by query
-exports.findMessages = (query) => MessageModel.find(query);
+exports.findMessages = (query) => MessageModel.find(query).populate('receiver sender', 'fullName image');
 
 // find message by query
 exports.findMessage = (query) => MessageModel.findOne(query);

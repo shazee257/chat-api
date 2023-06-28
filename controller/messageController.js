@@ -21,22 +21,24 @@ exports.sendMessage = async (req, res, next) => {
     try {
 
         // find created channel or create new channel
-        let isChannel = await findMessage({ sender, receiver });
+        let isChannel = await findMessage({
+            $or: [
+                { channel: `${sender}-${receiver}` },
+                { channel: `${receiver}-${sender}` }
+            ]
+        });
 
-        let message;
-        if (!isChannel) {
-            const channel = `${sender}-${receiver}`;
-            message = await createMessage({ sender, receiver, text, channel });
-            sendMessageIO(receiver, message);
-            generateResponse(message, "Send successfully", res);
-            return;
+        let channel;
+        if (!isChannel) channel = `${sender}-${receiver}`;
+        else channel = isChannel.channel;
+
+        const message = await createMessage({ sender, receiver, text, channel });
+
+        if (message) {
+            const newMessage = await findMessage({ _id: message._id }).populate('sender receiver', 'fullName image');
+            sendMessageIO(receiver, newMessage);
+            generateResponse(newMessage, "Send successfully", res);
         }
-
-        console.log("channel already exist");
-        message = await createMessage({ sender, receiver, text, channel: isChannel.channel });
-
-        sendMessageIO(receiver, message);
-        generateResponse(message, "Send successfully", res);
     } catch (error) {
         next(new Error(error.message));
     }
@@ -48,13 +50,27 @@ exports.getMessages = async (req, res, next) => {
     const sender = req.user.id;
 
     try {
-        const { channel } = await findMessage({ sender, receiver })
-        if (!channel) {
+        const isMessageExists = await findMessage({
+            $or: [
+                { channel: `${sender}-${receiver}` },
+                { channel: `${receiver}-${sender}` }
+            ]
+        });
+
+        console.log("isMessageExists", isMessageExists);
+
+        if (!isMessageExists) {
+            console.log("No messages found");
             generateResponse(null, "No messages found", res, STATUS_CODES.NOT_FOUND);
             return;
         }
 
-        const messages = await findMessages({ channel });
+        const messages = await findMessages({
+            $or: [
+                { channel: `${sender}-${receiver}` },
+                { channel: `${receiver}-${sender}` }
+            ]
+        });
         // .populate('sender', 'fullName image online')
         generateResponse(messages, "Messages fetched successfully", res);
     } catch (error) {

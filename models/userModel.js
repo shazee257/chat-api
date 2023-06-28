@@ -7,7 +7,7 @@ const { ROLES } = require('../utils/constants');
 const userSchema = new Schema({
     email: { type: String, unique: true, required: true, lowercase: true },
     password: { type: String, required: true, select: false },
-    fullName: { type: String, required: true },
+    name: { type: String, required: true },
     role: { type: String, enum: Object.values(ROLES), default: "user" },
     image: { type: String, default: null },
     online: { type: Boolean, default: false },
@@ -26,7 +26,7 @@ exports.generateToken = (user) => {
     const token = sign({
         id: user._id,
         email: user.email,
-        fullName: user.fullName,
+        name: user.name,
         role: user.role
     }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRATION });
     return token;
