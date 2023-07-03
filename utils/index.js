@@ -59,34 +59,6 @@ exports.upload = (folderName) => {
     })
 }
 
-exports.userAccessibleFields = [
-    '_id',
-    'email',
-    'fullName',
-    'mobile',
-    'role',
-    'image',
-    'dob',
-    'country',
-    'city',
-    'location',
-    'rank',
-    'aboutMe',
-    'earning',
-    'isActive',
-    'isVerified',
-    'fcmToken',
-    'createdAt',
-    'updatedAt',
-    "isFollowing",
-    "isFollower",
-    "noOfFollowers",
-    "noOfFollowing",
-    "paymentMethods",
-    "competitionIds",
-    "competitionWinIds",
-]
-
 exports.sendNotification = ({ title, body, fcmToken }) => {
     const serverKey = process.env.FIREBASE_SERVER_KEY;
     const fcm = new FCM(serverKey);

@@ -17,6 +17,7 @@ class UserAPI {
     setupRoutes() {
         let router = this.router;
 
+        
         router.get('/me', authMiddleware(Object.values(ROLES)), getUser);
         router.get('/search', authMiddleware(Object.values(ROLES)), getUsers);
     }

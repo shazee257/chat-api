@@ -4,6 +4,7 @@ const { Router } = require('express');
 const {
     sendMessage,
     getMessages,
+    getChatList,
 } = require('../controller/messageController');
 const { upload } = require('../utils');
 const authMiddleware = require('../middlewares/Auth');
@@ -18,7 +19,8 @@ class MessageAPI {
     setupRoutes() {
         let router = this.router;
 
-        router.get('/:receiver', authMiddleware(Object.values(ROLES)), getMessages);
+        router.get('/chat-list', authMiddleware(Object.values(ROLES)), getChatList);
+        router.get('/:user', authMiddleware(Object.values(ROLES)), getMessages);
         router.post('/send', authMiddleware(Object.values(ROLES)), sendMessage);
         // upload('messages').single('image'), 
     }

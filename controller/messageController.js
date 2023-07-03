@@ -5,6 +5,8 @@ const {
     createMessage,
     findMessage,
     findMessages,
+    updateMessages,
+    getChatListFromMessages
 } = require('../models/messageModel');
 const { STATUS_CODES } = require('../utils/constants');
 const {
@@ -12,6 +14,8 @@ const {
     //     seenAllMessagesIO,
     //     isDeletedForAllIO
 } = require('../socket');
+
+const { updateChat, createChat, findChats, findChat } = require('../models/chatModel');
 
 // create new message
 exports.sendMessage = async (req, res, next) => {
@@ -21,22 +25,29 @@ exports.sendMessage = async (req, res, next) => {
     try {
 
         // find created channel or create new channel
-        let isChannel = await findMessage({
-            $or: [
-                { channel: `${sender}-${receiver}` },
-                { channel: `${receiver}-${sender}` }
-            ]
+        let isChannel = await findChat({
+            $or: [{ channel: `${sender}-${receiver}` }, { channel: `${receiver}-${sender}` }]
         });
 
         let channel;
-        if (!isChannel) channel = `${sender}-${receiver}`;
+        if (!isChannel) {
+            // create chat / new channel
+            channel = `${sender}-${receiver}`;
+            await createChat({
+                users: [sender, receiver],
+                channel
+            });
+        }
         else channel = isChannel.channel;
 
-        const message = await createMessage({ sender, receiver, text, channel });
+        const message = await createMessage({ sender, text, channel });
+
+        // update last message in chat
+        await updateChat({ channel }, { lastMessage: message._id });
 
         if (message) {
-            const newMessage = await findMessage({ _id: message._id }).populate('sender receiver', 'fullName image');
-            sendMessageIO(receiver, newMessage);
+            const newMessage = await findMessage({ _id: message._id }).populate('sender', 'name image');
+            // sendMessageIO(receiver, newMessage);
             generateResponse(newMessage, "Send successfully", res);
         }
     } catch (error) {
@@ -46,33 +57,48 @@ exports.sendMessage = async (req, res, next) => {
 
 // get user messages
 exports.getMessages = async (req, res, next) => {
-    const { receiver } = req.params;
-    const sender = req.user.id;
+    const { user } = req.params;
+    const loginUser = req.user.id;
 
     try {
-        const isMessageExists = await findMessage({
+        // update all messages to seen
+        await updateMessages({
+            $or: [{ channel: `${user}-${loginUser}` }, { channel: `${loginUser}-${user}` }],
+            sender: user
+        }, { isRead: true });
+
+        const messages = await findMessages({
             $or: [
-                { channel: `${sender}-${receiver}` },
-                { channel: `${receiver}-${sender}` }
+                { channel: `${loginUser}-${user}` },
+                { channel: `${user}-${loginUser}` }
             ]
         });
 
-        console.log("isMessageExists", isMessageExists);
-
-        if (!isMessageExists) {
+        if (messages.length === 0 || !messages) {
             console.log("No messages found");
             generateResponse(null, "No messages found", res, STATUS_CODES.NOT_FOUND);
             return;
         }
 
-        const messages = await findMessages({
-            $or: [
-                { channel: `${sender}-${receiver}` },
-                { channel: `${receiver}-${sender}` }
-            ]
-        });
-        // .populate('sender', 'fullName image online')
         generateResponse(messages, "Messages fetched successfully", res);
+    } catch (error) {
+        next(new Error(error.message));
+    }
+}
+
+// get chat list
+exports.getChatList = async (req, res, next) => {
+    const userId = req.user.id;
+
+    try {
+        const chats = await findChats(userId);
+
+        if (chats.length === 0 || !chats) {
+            generateResponse(null, "No chats found", res);
+            return;
+        }
+
+        generateResponse(chats, "Chats fetched successfully", res);
     } catch (error) {
         next(new Error(error.message));
     }
